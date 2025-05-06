@@ -59,26 +59,26 @@ fi
 
 # create live kit filesystem (cpio archive)
 rm -Rf "$LIVEKITDATA"
-BOOT="$LIVEKITDATA"/"$LIVEKITNAME"/boot
+BOOT="$LIVEKITDATA/$LIVEKITNAME/boot"
 mkdir -p "$BOOT"
-mkdir -p "$BOOT"/../changes
-mkdir -p "$BOOT"/../modules
+mkdir -p "$BOOT/../changes"
+mkdir -p "$BOOT/../modules"
 
-if [ "$INITRAMFS" != "" ]; then
-   mv "$INITRAMFS" $BOOT/initrfs.img
+if [[ $INITRAMFS ]]; then
+   mv "$INITRAMFS" "$BOOT/initrfs.img"
 fi
 
 # BIOS / MBR booting
-cp -r bootfiles/* $BOOT
-cat bootfiles/syslinux.cfg | sed -r "s:/boot/:/$LIVEKITNAME/boot/:" > $BOOT/syslinux.cfg
-cat bootfiles/bootinst.bat | sed -r "s:/boot/:/$LIVEKITNAME/boot/:" | sed -r "s:\\\\boot\\\\:\\\\$LIVEKITNAME\\\\boot\\\\:" > $BOOT/bootinst.bat
-cp $VMLINUZ $BOOT/ || exit
+cp -r bootfiles/* "$BOOT"
+sed -r "s:/boot/:/$LIVEKITNAME/boot/:" bootfiles/syslinux.cfg > "$BOOT/syslinux.cfg"
+sed -r "s:/boot/:/$LIVEKITNAME/boot/:" bootfiles/bootinst.bat | sed -r "s:\\\\boot\\\\:\\\\$LIVEKITNAME\\\\boot\\\\:" > "$BOOT/bootinst.bat"
+cp "$VMLINUZ" "$BOOT/" || failAndExit "Could not copy '$VMLINUZ'"
 
 # UEFI booting
-mkdir -p $BOOT/EFI/Boot
-cp bootfiles/EFI/Boot/syslinux.efi $BOOT/EFI/Boot/bootx64.efi
-cp bootfiles/EFI/Boot/{ldlinux.e64,menu.c32,libutil.c32,vesamenu.c32,libcom32.c32} $BOOT/EFI/Boot
-cat $BOOT/syslinux.cfg | sed -r "s:/$LIVEKITNAME/boot/vesamenu:vesamenu:" > $BOOT/EFI/Boot/syslinux.cfg
+mkdir -p "$BOOT/EFI/Boot"
+cp bootfiles/EFI/Boot/syslinux.efi "$BOOT/EFI/Boot/bootx64.efi"
+cp bootfiles/EFI/Boot/{ldlinux.e64,menu.c32,libutil.c32,vesamenu.c32,libcom32.c32} "$BOOT/EFI/Boot"
+sed -r "s:/$LIVEKITNAME/boot/vesamenu:vesamenu:" "$BOOT/syslinux.cfg" > "$BOOT/EFI/Boot/syslinux.cfg"
 
 # create compressed 01-core.sb
 COREFS=""
@@ -88,13 +88,13 @@ for i in $MKMOD; do
    fi
 done
 if [ "$SKIPCOREMOD" = "" ]; then
-   mksquashfs $COREFS $LIVEKITDATA/$LIVEKITNAME/modules/01-core.$BEXT -comp xz -b 1024K -Xbcj x86 -always-use-fragments -keep-as-directory || exit
+   mksquashfs $COREFS "$LIVEKITDATA/$LIVEKITNAME/modules/01-core.$BEXT" -comp xz -b 1024K -Xbcj x86 -always-use-fragments -keep-as-directory || failAndExit "Could not create squashfs"
 fi
 
 ARCH=$(uname -m)
 TARGET=/tmp
 
-cat "$CWD/bootinfo.txt" | fgrep -v "#" | sed -r "s/mylinux/$LIVEKITNAME/" | sed -r "s/\$/\x0D/" > readme.txt
+grep -F "#" "$CWD/bootinfo.txt" | sed -r "s/mylinux/$LIVEKITNAME/" | sed -r "s/\$/\x0D/" > readme.txt
 
 echo cd $LIVEKITDATA '&&' $MKISOFS -o "$TARGET/$LIVEKITNAME-$ARCH.iso" -v -J -R -D -A "$LIVEKITNAME" -V "$LIVEKITNAME" \
 -no-emul-boot -boot-info-table -boot-load-size 4 \
@@ -108,6 +108,5 @@ chmod o+x $TARGET/gen_"$LIVEKITNAME"_zip.sh
 
 echo "-----------------------------"
 echo "Finished. Find your result in $LIVEKITDATA"
-echo "To build ISO, run: $TARGET/gen_"$LIVEKITNAME"_iso.sh"
-echo "To build ZIP, run: $TARGET/gen_"$LIVEKITNAME"_zip.sh"
-cd $CWD
+echo "To build ISO, run: $WORKDIR/gen_${LIVEKITNAME}_iso.sh"
+echo "To build ZIP, run: $WORKDIR/gen_${LIVEKITNAME}_zip.sh"
