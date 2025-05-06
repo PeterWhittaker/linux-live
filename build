@@ -21,8 +21,10 @@ export PATH=.:./tools:../tools:/usr/sbin:/usr/bin:/sbin:/bin:/
 cd "$(dirname "$(realpath "$0")")" || failAndExit 1 "Could not cd to $0's directory"
 CWD="$(pwd)"
 
-. ./config || exit 1
-. ./livekitlib || exit 1
+for sourceFile in ./config ./livekitlib; do
+    #shellcheck disable=SC1090
+    source "$sourceFile" || failAndExit "Could not source '$sourceFile'"
+done
 
 # only root can continue, because only root can read all files from your system
 allow_only_root
