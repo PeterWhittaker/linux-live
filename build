@@ -94,19 +94,27 @@ if [ "$SKIPCOREMOD" = "" ]; then
 fi
 
 ARCH=$(uname -m)
-TARGET=/tmp
+TARGET="${ISODIR:-/tmp}"
 
 grep -F "#" "$CWD/bootinfo.txt" | sed -r "s/mylinux/$LIVEKITNAME/" | sed -r "s/\$/\x0D/" > readme.txt
 
-echo cd $LIVEKITDATA '&&' $MKISOFS -o "$TARGET/$LIVEKITNAME-$ARCH.iso" -v -J -R -D -A "$LIVEKITNAME" -V "$LIVEKITNAME" \
--no-emul-boot -boot-info-table -boot-load-size 4 \
--b "$LIVEKITNAME"/boot/isolinux.bin -c "$LIVEKITNAME"/boot/isolinux.boot . \
-> $TARGET/gen_"$LIVEKITNAME"_iso.sh
-chmod o+x $TARGET/gen_"$LIVEKITNAME"_iso.sh
+cat << EOF > "$WORKDIR/gen_${LIVEKITNAME}_iso.sh"
+sudo $MKISOFS -o "$TARGET/$LIVEKITNAME-$ARCH.iso"               \
+    -U -r -joliet-long -J                                       \
+    -allow-limited-size                                         \
+    -v                                                          \
+    -volset "$LIVEKITNAME" -A "$LIVEKITNAME" -V "$LIVEKITNAME"  \
+    -no-emul-boot -boot-info-table -boot-load-size 4 i          \
+    -b "$LIVEKITNAME"/boot/isolinux.bin                         \
+    -c "$LIVEKITNAME"/boot/isolinux.boot                        \
+    "$LIVEKITDATA"
+EOF
+chmod o+x "$WORKDIR/gen_${LIVEKITNAME}_iso.sh"
 
-echo cd $LIVEKITDATA '&&' zip -0 -r "$TARGET/$LIVEKITNAME-$ARCH.zip" '*' \
-> $TARGET/gen_"$LIVEKITNAME"_zip.sh
-chmod o+x $TARGET/gen_"$LIVEKITNAME"_zip.sh
+cat << EOF > "$WORKDIR/gen_${LIVEKITNAME}_zip.sh"
+cd $LIVEKITDATA && zip -0 -r "$TARGET/$LIVEKITNAME-$ARCH.zip" \*
+EOF
+chmod o+x "$WORKDIR/gen_${LIVEKITNAME}_zip.sh"
 
 echo "-----------------------------"
 echo "Finished. Find your result in $LIVEKITDATA"
