@@ -43,13 +43,13 @@ if [ "$(mksquashfs 2>&1 | grep "Xdict-size")" = "" ]; then
    exit 1
 fi
 
-MKISOFS=$(which mkisofs)
-if [ "$MKISOFS" = "" ]; then
-   MKISOFS=$(which genisoimage)
-fi
-if [ "$MKISOFS" = "" ]; then
-   echo "Cannot find mkisofs or genisoimage, stop"
-   exit 3
+MKISO=$(command -v mkisofs)
+GNISO=$(command -v genisoimage)
+[[ ! $MKISO && ! $GNISO ]] && failAndExit 3 "Cannot find mkisofs or genisoimage, stop"
+if [[ $MKISO ]]; then
+    MKISOFS="$MKISO"
+else
+    MKISOFS="$GNISO"
 fi
 
 set -x
@@ -85,8 +85,8 @@ sed -r "s:/$LIVEKITNAME/boot/vesamenu:vesamenu:" "$BOOT/syslinux.cfg" > "$BOOT/E
 # create compressed 01-core.sb
 COREFS=""
 for i in $MKMOD; do
-   if [ -d /$i ]; then
-      COREFS="$COREFS /$i"
+   if [ -d "/$i" ]; then
+      COREFS+=" /$i"
    fi
 done
 if [ "$SKIPCOREMOD" = "" ]; then
