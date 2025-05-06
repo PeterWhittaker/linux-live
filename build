@@ -106,7 +106,7 @@ sudo $MKISOFS -o "$TARGET/$LIVEKITNAME-$ARCH.iso"               \
     -allow-limited-size                                         \
     -v                                                          \
     -volset "$LIVEKITNAME" -A "$LIVEKITNAME" -V "$LIVEKITNAME"  \
-    -no-emul-boot -boot-info-table -boot-load-size 4 i          \
+    -no-emul-boot -boot-info-table -boot-load-size 4            \
     -b "$LIVEKITNAME"/boot/isolinux.bin                         \
     -c "$LIVEKITNAME"/boot/isolinux.boot                        \
     "$LIVEKITDATA"
