@@ -1,4 +1,7 @@
 #!/bin/bash
+# shellcheck disable=SC2034
+# do ^ because we mostly define variables that are unused herein
+
 # This is a config file for Linux Live Kit build script.
 # You shouldn't need to change anything expect LIVEKITNAME
 
@@ -14,10 +17,22 @@
 # and you're done.
 LIVEKITNAME="linux"
 
+# Where to write the ISO, e.g., a network share
+ISODIR=/mnt/nasiso
+# Where to do our work
+WORKDIR=/tmp
+
 # Kernel file, will be copied to your Live Kit
 # Your kernel must support aufs and squashfs. Debian Jessie's kernel is ready
 # out of the box.
-VMLINUZ=/vmlinuz
+if [[ -e /vmlinuz ]]; then
+    VMLINUZ=/vmlinuz
+elif [[ -e /boot/vmlinuz-$(uname -r) ]]; then
+    VMLINUZ="/boot/vmlinuz-$(uname -r)"
+else
+    >&2 echo "Could not set 'VMLINUZ'"
+    exit 1
+fi
 
 # Kernel version. Change it to "3.2.28" for example, if you are building
 # Live Kit with a different kernel than the one you are actually running
@@ -37,7 +52,7 @@ MKMOD="bin etc home lib lib64 libx32 opt root sbin srv usr var"
 NETWORK=false
 
 # Temporary directory to store livekit filesystem
-LIVEKITDATA=/tmp/$LIVEKITNAME-data-$$
+LIVEKITDATA="/$WORKDIR/${LIVEKITNAME}-data-$$"
 
 # Bundle extension, for example 'sb' for .sb extension
 BEXT=sb
