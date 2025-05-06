@@ -2,8 +2,9 @@
 # Create initramfs image
 # Author: Tomas M <http://www.linux-live.org/>
 #
-
-. ../config
+myDir=$(dirname "$(realpath "$0")")
+cd "$myDir" || exit 1
+. ../config || exit 1
 
 INITRAMFS=/tmp/$LIVEKITNAME-initramfs-$$
 
